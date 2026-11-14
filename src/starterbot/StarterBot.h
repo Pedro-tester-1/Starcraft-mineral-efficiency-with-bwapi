@@ -12,6 +12,8 @@ class StarterBot
     MapTools m_mapTools;
     MineralTracker m_mineralTracker;
     WinPredictor m_winPredictor;
+    // Este bool controla si se dibujan los recuadros de las unidades.
+    bool m_mostrarHitbox;
 
 public:
 

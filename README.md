@@ -3,6 +3,8 @@
 Proyecto final de Programación II (UTEC, 2026-2). Bot en C++ sobre
 [STARTcraft](https://github.com/davechurchill/STARTcraft) de Dave Churchill que:
 
+Versión actual: 1.1 (ver CHANGELOG.md)
+
 1. **Mide la eficiencia de cada campo de minerales:** frames entre extracciones,
    último conteo y promedio de los últimos 20, dibujados sobre cada mineral.
 2. **Predice la probabilidad de victoria** de cada jugador en tiempo real a partir de
@@ -18,6 +20,10 @@ Proyecto final de Programación II (UTEC, 2026-2). Bot en C++ sobre
 2. Compila el proyecto y ejecuta el bot.
 3. Lanza `RunStarcraftWithBWAPI.bat` (o `RunStarterBotAndStarcraft.sh` en Linux).
 4. Single Player > Expansion > Play Custom > elige el mapa en modo Melee.
+
+## Comandos en el juego
+- Escribe `hitbox` en el chat para alternar los recuadros de las unidades. El estado inicial es encendido y el bot muestra `Hitbox: ON` o `Hitbox: OFF`.
+- Escribe `/map` para alternar el dibujo de información del mapa.
 
 ## Archivos principales
 - `src/MineralTracker.*`: contador de frames por mineral

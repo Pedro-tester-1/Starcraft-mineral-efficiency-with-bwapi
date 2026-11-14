@@ -4,6 +4,16 @@
 #include <iomanip>
 #include <cstdlib>
 
+namespace
+{
+    // Estos umbrales clasifican promedios más bajos como una extracción más eficiente.
+    const double PROMEDIO_EFICIENTE_MAX = 160.0;
+    const double PROMEDIO_MEDIO_MAX = 200.0;
+    const int TEXTO_X_OFFSET = 64;
+    const int ETIQUETA_ANCHO_APROXIMADO = 100;
+    const int ETIQUETA_ALTO_APROXIMADO = 40;
+}
+
 /** Inicializa el historial que se irá completando durante la partida. */
 MineralTracker::MineralTracker()
     : m_lastCsvFrame(0)
@@ -49,7 +59,7 @@ void MineralTracker::onFrame()
         data->position = unit->getPosition();
         data->active = true;
         const int resources = unit->getResources();
-        if (resources < data->previousResources)
+        if (data->previousResources - resources >= 8)
         {
             data->lastFrames = data->currentFrames;
             data->history.push_back(data->currentFrames);
@@ -88,7 +98,7 @@ void MineralTracker::onFrame()
     }
 }
 
-/** Muestra tres datos del mineral con pequeñas variaciones verticales. */
+/** Dibuja etiquetas compactas, coloreadas y separadas junto a los minerales. */
 void MineralTracker::draw() const
 {
     std::vector<BWAPI::Position> labelPositions;
@@ -100,6 +110,12 @@ void MineralTracker::draw() const
         double sum = 0.0;
         for (size_t j = 0; j < data.history.size(); ++j) { sum += data.history[j]; }
         const double average = data.history.empty() ? 0.0 : sum / data.history.size();
+        int color = BWAPI::Text::White;
+        if (!data.history.empty() && average <= PROMEDIO_EFICIENTE_MAX) { color = BWAPI::Text::Green; }
+        else if (!data.history.empty() && average <= PROMEDIO_MEDIO_MAX) { color = BWAPI::Text::Yellow; }
+        else if (!data.history.empty()) { color = BWAPI::Text::Red; }
+
+        const int textX = data.position.x - TEXTO_X_OFFSET;
         int textY = data.position.y - 28;
         for (size_t offset = 0; offset < sizeof(yOffsets) / sizeof(yOffsets[0]); ++offset)
         {
@@ -107,8 +123,8 @@ void MineralTracker::draw() const
             bool overlaps = false;
             for (size_t j = 0; j < labelPositions.size(); ++j)
             {
-                if (std::abs(labelPositions[j].x - (data.position.x - 48)) < 72
-                    && std::abs(labelPositions[j].y - candidateY) < 40)
+                if (std::abs(labelPositions[j].x - textX) < ETIQUETA_ANCHO_APROXIMADO
+                    && std::abs(labelPositions[j].y - candidateY) < ETIQUETA_ALTO_APROXIMADO)
                 {
                     overlaps = true;
                     break;
@@ -117,9 +133,10 @@ void MineralTracker::draw() const
             textY = candidateY;
             if (!overlaps) { break; }
         }
-        labelPositions.push_back(BWAPI::Position(data.position.x - 48, textY));
-        BWAPI::Broodwar->drawTextMap(data.position.x - 48, textY,
-            "%d\n%.2f\n%d", data.lastFrames, average, data.currentFrames);
+        labelPositions.push_back(BWAPI::Position(textX, textY));
+        BWAPI::Broodwar->drawTextMap(textX, textY,
+            "%cUlt: %d\n%cProm: %.2f\n%cAhora: %d",
+            color, data.lastFrames, color, average, color, data.currentFrames);
     }
 }
 

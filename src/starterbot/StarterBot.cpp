@@ -3,6 +3,7 @@
 #include "MapTools.h"
 
 StarterBot::StarterBot()
+    : m_mostrarHitbox(true)
 {
     
 }
@@ -10,8 +11,8 @@ StarterBot::StarterBot()
 // Called when the bot starts!
 void StarterBot::onStart()
 {
-    // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+    // AIIDE juega sin demora entre frames; 0 es la velocidad máxima de BWAPI.
+	BWAPI::Broodwar->setLocalSpeed(0);
     BWAPI::Broodwar->setFrameSkip(0);
     
     // Enable the flag that tells BWAPI top let users enter input while bot plays
@@ -110,7 +111,8 @@ void StarterBot::buildAdditionalSupply()
 void StarterBot::drawDebugInformation()
 {
     Tools::DrawUnitCommands();
-    Tools::DrawUnitBoundingBoxes();
+    // El estado se cambia al escribir "hitbox" y aquí se decide si dibujar los recuadros.
+    if (m_mostrarHitbox) { Tools::DrawUnitBoundingBoxes(); }
 }
 
 // Called whenever the game ends and tells you if you won or not
@@ -158,6 +160,14 @@ void StarterBot::onSendText(std::string text)
     if (text == "/map")
     {
         m_mapTools.toggleDraw();
+    }
+    else if (text == "hitbox")
+    {
+        // Cada mensaje "hitbox" invierte el estado y confirma el nuevo valor en el juego.
+        m_mostrarHitbox = !m_mostrarHitbox;
+        const int color = m_mostrarHitbox ? BWAPI::Text::Green : BWAPI::Text::Red;
+        const char* estado = m_mostrarHitbox ? "ON" : "OFF";
+        BWAPI::Broodwar->printf("%cHitbox: %s", color, estado);
     }
 }
 

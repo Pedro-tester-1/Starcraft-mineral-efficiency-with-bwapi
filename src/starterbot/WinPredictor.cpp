@@ -8,6 +8,18 @@ namespace
     const double TECH_WEIGHT = 0.10;
     const double MAP_WEIGHT = 0.10;
     const double KILL_WEIGHT = 0.10;
+
+    // Posiciones y tamaños del panel para mantener todas las barras alineadas.
+    const int PANEL_X = 8;
+    const int PANEL_Y = 8;
+    const int PANEL_WIDTH = 300;
+    const int PANEL_TOP_HEIGHT = 32;
+    const int ROW_HEIGHT = 25;
+    const int PLAYER_NAME_X = 18;
+    const int BAR_X = 112;
+    const int BAR_WIDTH = 145;
+    const int BAR_HEIGHT = 10;
+    const int PERCENT_X = 265;
 }
 
 /** Prepara el predictor sin asignar ventaja inicial a ningún jugador. */
@@ -108,20 +120,47 @@ void WinPredictor::onUnitDestroyed(BWAPI::Unit unit)
     m_killedValue[BWAPI::Broodwar->self()->getID()] += type.mineralPrice() + 1.5 * type.gasPrice();
 }
 
-/** Dibuja barras que comparan visualmente la probabilidad actual por jugador. */
+/** Dibuja el nombre, la barra de color y el porcentaje de un jugador. */
+void WinPredictor::drawPlayerBar(BWAPI::Player player, double probability, int y) const
+{
+    const int barTop = y + 5;
+    double boundedProbability = probability;
+    if (boundedProbability < 0.0) { boundedProbability = 0.0; }
+    if (boundedProbability > 1.0) { boundedProbability = 1.0; }
+    const int filledWidth = static_cast<int>(boundedProbability * BAR_WIDTH);
+
+    BWAPI::Broodwar->drawTextScreen(PLAYER_NAME_X, y, "%s", player->getName().c_str());
+    BWAPI::Broodwar->drawBoxScreen(BAR_X, barTop, BAR_X + BAR_WIDTH, barTop + BAR_HEIGHT,
+        BWAPI::Colors::Grey, true);
+    BWAPI::Broodwar->drawBoxScreen(BAR_X, barTop, BAR_X + filledWidth, barTop + BAR_HEIGHT,
+        player->getColor(), true);
+    BWAPI::Broodwar->drawTextScreen(PERCENT_X, y, "%.1f%%", boundedProbability * 100.0);
+}
+
+/** Dibuja el panel de fondo y una barra alineada por cada jugador. */
 void WinPredictor::draw() const
 {
-    int y = 12;
+    int playerCount = 0;
+    for (auto& player : BWAPI::Broodwar->getPlayers())
+    {
+        if (player && !player->isNeutral()) { playerCount++; }
+    }
+    const int panelHeight = PANEL_TOP_HEIGHT + playerCount * ROW_HEIGHT;
+    BWAPI::Broodwar->drawBoxScreen(PANEL_X, PANEL_Y, PANEL_X + PANEL_WIDTH,
+        PANEL_Y + panelHeight, BWAPI::Colors::Black, true);
+    BWAPI::Broodwar->drawBoxScreen(PANEL_X, PANEL_Y, PANEL_X + PANEL_WIDTH,
+        PANEL_Y + panelHeight, BWAPI::Colors::Grey, false);
+    BWAPI::Broodwar->drawTextScreen(PANEL_X + 10, PANEL_Y + 5,
+        "%cProbabilidad de victoria", BWAPI::Text::White);
+
+    int y = PANEL_Y + PANEL_TOP_HEIGHT;
     for (auto& player : BWAPI::Broodwar->getPlayers())
     {
         if (!player || player->isNeutral()) { continue; }
         std::map<int, double>::const_iterator it = m_currentProbabilities.find(player->getID());
         const double probability = it == m_currentProbabilities.end() ? 0.0 : it->second;
-        const int width = static_cast<int>(probability * 200.0);
-        BWAPI::Broodwar->drawBoxScreen(10, y + 14, 210, y + 26, BWAPI::Colors::Grey, true);
-        BWAPI::Broodwar->drawBoxScreen(10, y + 14, 10 + width, y + 26, BWAPI::Colors::Green, true);
-        BWAPI::Broodwar->drawTextScreen(10, y, "%s: %.1f%%", player->getName().c_str(), probability * 100.0);
-        y += 32;
+        drawPlayerBar(player, probability, y);
+        y += ROW_HEIGHT;
     }
 }
 

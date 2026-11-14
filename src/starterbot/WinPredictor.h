@@ -24,6 +24,9 @@ class WinPredictor
     /** Calcula todas las probabilidades normalizadas usando el estado actual. */
     std::map<int, double> calculate() const;
 
+    /** Dibuja el nombre, la barra y el porcentaje de un jugador en una fila. */
+    void drawPlayerBar(BWAPI::Player player, double probability, int y) const;
+
 public:
     /** Inicializa los datos del predictor para una partida nueva. */
     WinPredictor();
