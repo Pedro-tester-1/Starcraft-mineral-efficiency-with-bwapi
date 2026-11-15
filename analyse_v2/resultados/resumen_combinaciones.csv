@@ -1,0 +1,7 @@
+raza,lado_inicio,n_partidas,promedio_9_campos,desviacion_entre_partidas,promedio_trabajadores_propios,minimo_trabajadores,maximo_trabajadores
+Terran,izquierda,3,128.35,4.42,18.00,18.00,18.00
+Terran,derecha,3,123.93,2.92,18.00,18.00,18.00
+Protoss,izquierda,3,125.99,2.13,18.67,18.00,19.00
+Protoss,derecha,3,125.29,1.10,19.00,19.00,19.00
+Zerg,izquierda,3,167.27,0.68,9.00,9.00,9.00
+Zerg,derecha,3,158.18,1.46,9.00,9.00,9.00

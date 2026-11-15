@@ -3,20 +3,20 @@
 #include <fstream>
 #include <iomanip>
 #include <cstdlib>
+#include <cmath>
 
 namespace
 {
     // Estos umbrales clasifican promedios más bajos como una extracción más eficiente.
     const double PROMEDIO_EFICIENTE_MAX = 160.0;
     const double PROMEDIO_MEDIO_MAX = 200.0;
-    const int TEXTO_X_OFFSET = 64;
-    const int ETIQUETA_ANCHO_APROXIMADO = 100;
-    const int ETIQUETA_ALTO_APROXIMADO = 40;
+    const double RADIO_BASE_PROPIA_PIXELES = 320.0;
+    const int CAMPOS_ESPERADOS_BASE = 9;
 }
 
 /** Inicializa el historial que se irá completando durante la partida. */
 MineralTracker::MineralTracker()
-    : m_lastCsvFrame(0)
+    : m_lastCsvFrame(0), m_f5000CsvWritten(false)
 {
 }
 
@@ -51,6 +51,7 @@ void MineralTracker::onFrame()
             fresh.finalAverage = 0.0;
             fresh.hasAverage = false;
             fresh.active = true;
+            fresh.discardedFirstCount = false;
             m_minerals.push_back(fresh);
             data = &m_minerals.back();
         }
@@ -61,9 +62,13 @@ void MineralTracker::onFrame()
         const int resources = unit->getResources();
         if (data->previousResources - resources >= 8)
         {
-            data->lastFrames = data->currentFrames;
-            data->history.push_back(data->currentFrames);
-            if (data->history.size() > 20) { data->history.pop_front(); }
+            if (data->discardedFirstCount)
+            {
+                data->lastFrames = data->currentFrames;
+                data->history.push_back(data->currentFrames);
+                if (data->history.size() > 20) { data->history.pop_front(); }
+            }
+            else { data->discardedFirstCount = true; }
             data->currentFrames = 0;
         }
         else
@@ -91,6 +96,11 @@ void MineralTracker::onFrame()
     }
 
     const int frame = BWAPI::Broodwar->getFrameCount();
+    if (frame == 5000 && !m_f5000CsvWritten)
+    {
+        saveFrame5000Csv("minerales_f5000.csv");
+        m_f5000CsvWritten = true;
+    }
     if (frame - m_lastCsvFrame >= 1000)
     {
         saveCsv("minerales.csv");
@@ -101,8 +111,8 @@ void MineralTracker::onFrame()
 /** Dibuja etiquetas compactas, coloreadas y separadas junto a los minerales. */
 void MineralTracker::draw() const
 {
-    std::vector<BWAPI::Position> labelPositions;
-    const int yOffsets[] = { 0, -40, 40, -80, 80, -120, 120, -160, 160 };
+    BWAPI::Broodwar->setTextSize(BWAPI::Text::Size::Small);
+    const int halfMapX = BWAPI::Broodwar->mapWidth() * 16;
     for (size_t i = 0; i < m_minerals.size(); ++i)
     {
         const MineralData& data = m_minerals[i];
@@ -115,29 +125,14 @@ void MineralTracker::draw() const
         else if (!data.history.empty() && average <= PROMEDIO_MEDIO_MAX) { color = BWAPI::Text::Yellow; }
         else if (!data.history.empty()) { color = BWAPI::Text::Red; }
 
-        const int textX = data.position.x - TEXTO_X_OFFSET;
-        int textY = data.position.y - 28;
-        for (size_t offset = 0; offset < sizeof(yOffsets) / sizeof(yOffsets[0]); ++offset)
-        {
-            const int candidateY = data.position.y - 28 + yOffsets[offset];
-            bool overlaps = false;
-            for (size_t j = 0; j < labelPositions.size(); ++j)
-            {
-                if (std::abs(labelPositions[j].x - textX) < ETIQUETA_ANCHO_APROXIMADO
-                    && std::abs(labelPositions[j].y - candidateY) < ETIQUETA_ALTO_APROXIMADO)
-                {
-                    overlaps = true;
-                    break;
-                }
-            }
-            textY = candidateY;
-            if (!overlaps) { break; }
-        }
-        labelPositions.push_back(BWAPI::Position(textX, textY));
+        const int textX = data.position.x + (data.position.x >= halfMapX ? -140 : 40);
+        const int textY = data.position.y;
+        BWAPI::Broodwar->drawBoxMap(textX - 3, textY - 3, textX + 103, textY + 13,
+                                    BWAPI::Colors::Black, true);
         BWAPI::Broodwar->drawTextMap(textX, textY,
-            "%cUlt: %d\n%cProm: %.2f\n%cAhora: %d",
-            color, data.lastFrames, color, average, color, data.currentFrames);
+            "%cU%d P%.1f A%d", color, data.lastFrames, average, data.currentFrames);
     }
+    BWAPI::Broodwar->setTextSize(BWAPI::Text::Size::Default);
 }
 
 /** Escribe un CSV con posición, formación, raza propia y promedio observado. */
@@ -145,7 +140,7 @@ void MineralTracker::saveCsv(const std::string& path) const
 {
     std::ofstream out(path.c_str());
     if (!out) { return; }
-    out << "id,x,y,formacion,raza,promedio_frames\n";
+    out << "id,x,y,formacion,raza,promedio_frames,n_conteos\n";
     out << std::fixed << std::setprecision(2);
     std::string ownRace = "Desconocida";
     if (BWAPI::Broodwar->self()) { ownRace = BWAPI::Broodwar->self()->getRace().getName(); }
@@ -154,8 +149,70 @@ void MineralTracker::saveCsv(const std::string& path) const
         const MineralData& data = m_minerals[i];
         const std::string formation = data.position.x < BWAPI::Broodwar->mapWidth() * 16 ? "izquierda" : "derecha";
         out << data.id << ',' << data.position.x << ',' << data.position.y << ',' << formation << ',' << ownRace << ',';
-        if (data.hasAverage) { out << data.finalAverage; }
+        if (data.history.size() >= 3 && data.hasAverage) { out << data.finalAverage; }
         else { out << "NA"; }
-        out << '\n';
+        out << ',' << data.history.size() << '\n';
+    }
+}
+
+/** Escribe posición, mediciones y contexto de partida en el frame 5000. */
+void MineralTracker::saveFrame5000Csv(const std::string& path) const
+{
+    std::ofstream out(path.c_str());
+    if (!out) { return; }
+
+    BWAPI::Player self = BWAPI::Broodwar->self();
+    out << "id,x,y,formacion,raza,promedio_frames,n_conteos,es_propio,lado_inicio,trabajadores_propios,raza_rival,frame\n";
+    out << std::fixed << std::setprecision(2);
+
+    std::string ownRace = "Desconocida";
+    std::string rivalRace = "Unknown";
+    std::string startSide = "desconocido";
+    int workers = 0;
+    BWAPI::Position startPosition = BWAPI::Positions::Unknown;
+    bool hasStartPosition = false;
+
+    if (self)
+    {
+        ownRace = self->getRace().getName();
+        const BWAPI::TilePosition startTile = self->getStartLocation();
+        if (startTile.isValid())
+        {
+            startPosition = BWAPI::Position(startTile);
+            hasStartPosition = true;
+            startSide = startPosition.x < BWAPI::Broodwar->mapWidth() * 16 ? "izquierda" : "derecha";
+        }
+        for (auto& unit : self->getUnits())
+        {
+            if (unit && unit->exists() && unit->getType().isWorker()) { ++workers; }
+        }
+    }
+
+    BWAPI::Player enemy = BWAPI::Broodwar->enemy();
+    if (enemy && enemy->getRace() != BWAPI::Races::Unknown)
+    {
+        rivalRace = enemy->getRace().getName();
+    }
+
+    int ownMinerals = 0;
+    for (size_t i = 0; i < m_minerals.size(); ++i)
+    {
+        const MineralData& data = m_minerals[i];
+        const std::string formation = data.position.x < BWAPI::Broodwar->mapWidth() * 16 ? "izquierda" : "derecha";
+        const bool isOwn = hasStartPosition
+            && data.position.getDistance(startPosition) <= RADIO_BASE_PROPIA_PIXELES;
+        if (isOwn) { ++ownMinerals; }
+
+        out << data.id << ',' << data.position.x << ',' << data.position.y << ',' << formation << ',' << ownRace << ',';
+        if (data.history.size() >= 3 && data.hasAverage) { out << data.finalAverage; }
+        else { out << "NA"; }
+        out << ',' << data.history.size() << ',' << (isOwn ? 1 : 0) << ',' << startSide << ','
+            << workers << ',' << rivalRace << ',' << BWAPI::Broodwar->getFrameCount() << '\n';
+    }
+
+    if (ownMinerals != CAMPOS_ESPERADOS_BASE)
+    {
+        BWAPI::Broodwar->printf("MineralTracker: umbral de %.0f px clasifico %d campos propios; se esperaban %d.",
+                                RADIO_BASE_PROPIA_PIXELES, ownMinerals, CAMPOS_ESPERADOS_BASE);
     }
 }

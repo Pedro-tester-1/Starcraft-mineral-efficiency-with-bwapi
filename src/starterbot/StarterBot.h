@@ -14,6 +14,8 @@ class StarterBot
     WinPredictor m_winPredictor;
     // Este bool controla si se dibujan los recuadros de las unidades.
     bool m_mostrarHitbox;
+    bool m_mostrarEtiquetas;
+    bool m_mostrarLineasOrdenes;
 
 public:
 

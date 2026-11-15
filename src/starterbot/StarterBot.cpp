@@ -3,7 +3,7 @@
 #include "MapTools.h"
 
 StarterBot::StarterBot()
-    : m_mostrarHitbox(true)
+    : m_mostrarHitbox(true), m_mostrarEtiquetas(true), m_mostrarLineasOrdenes(true)
 {
     
 }
@@ -32,7 +32,7 @@ void StarterBot::onFrame()
     m_mapTools.onFrame();
     m_mineralTracker.onFrame();
     m_winPredictor.onFrame();
-    m_mineralTracker.draw();
+    if (m_mostrarEtiquetas) { m_mineralTracker.draw(); }
     m_winPredictor.draw();
 
     // Send our idle workers to mine minerals so they don't just stand there
@@ -110,7 +110,7 @@ void StarterBot::buildAdditionalSupply()
 // Draw some relevent information to the screen to help us debug the bot
 void StarterBot::drawDebugInformation()
 {
-    Tools::DrawUnitCommands();
+    if (m_mostrarLineasOrdenes) { Tools::DrawUnitCommands(); }
     // El estado se cambia al escribir "hitbox" y aquí se decide si dibujar los recuadros.
     if (m_mostrarHitbox) { Tools::DrawUnitBoundingBoxes(); }
 }
@@ -168,6 +168,16 @@ void StarterBot::onSendText(std::string text)
         const int color = m_mostrarHitbox ? BWAPI::Text::Green : BWAPI::Text::Red;
         const char* estado = m_mostrarHitbox ? "ON" : "OFF";
         BWAPI::Broodwar->printf("%cHitbox: %s", color, estado);
+    }
+    else if (text == "etiquetas")
+    {
+        m_mostrarEtiquetas = !m_mostrarEtiquetas;
+        BWAPI::Broodwar->printf("%cEtiquetas: %s", m_mostrarEtiquetas ? BWAPI::Text::Green : BWAPI::Text::Red, m_mostrarEtiquetas ? "ON" : "OFF");
+    }
+    else if (text == "ordenes")
+    {
+        m_mostrarLineasOrdenes = !m_mostrarLineasOrdenes;
+        BWAPI::Broodwar->printf("%cLineas de ordenes: %s", m_mostrarLineasOrdenes ? BWAPI::Text::Green : BWAPI::Text::Red, m_mostrarLineasOrdenes ? "ON" : "OFF");
     }
 }
 

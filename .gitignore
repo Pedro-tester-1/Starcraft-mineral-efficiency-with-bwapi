@@ -40,6 +40,9 @@ bin/RunReplayParserAndStarcraft.bat
 bin/replaydata
 # Linux: conservar el script lanzador, pero no subir los productos de compilación.
 /bin_linux/src/
+/bin_linux/minerales.csv
+/bin_linux/minerales_f5000.csv
+/bin_linux/predicciones.csv
 
 # Instalación local de StarCraft; solo se permite el archivo marcador vacío.
 /starcraft/*
@@ -71,3 +74,5 @@ Release/
 .DS_Store
 Thumbs.db
 Proyecto Final 2026-2.pdf
+# Los CSV de analyse_v2 son datos del análisis, no salidas generadas.
+!/analyse_v2/**/*.csv

@@ -21,10 +21,12 @@ class MineralTracker
         double finalAverage;
         bool hasAverage;
         bool active;
+        bool discardedFirstCount;
     };
 
     std::vector<MineralData> m_minerals;
     int m_lastCsvFrame;
+    bool m_f5000CsvWritten;
 
     /** Busca una medición por el identificador estable que entrega BWAPI. */
     MineralData* findMineral(int id);
@@ -41,4 +43,7 @@ public:
 
     /** Escribe el promedio final de cada mineral para el análisis del informe. */
     void saveCsv(const std::string& path) const;
+
+    /** Escribe una sola vez el estado extendido de los minerales en el frame 5000. */
+    void saveFrame5000Csv(const std::string& path) const;
 };
