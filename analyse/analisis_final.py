@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Análisis reproducible de las mediciones minerales de analyse_v2."""
+"""Análisis reproducible de las mediciones minerales de analyse."""
 import csv
 import math
 import re

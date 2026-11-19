@@ -1,9 +1,11 @@
 #include "StarterBot.h"
 #include "Tools.h"
 #include "MapTools.h"
+#include <algorithm>
+#include <cctype>
 
 StarterBot::StarterBot()
-    : m_mostrarHitbox(true), m_mostrarEtiquetas(true), m_mostrarLineasOrdenes(true)
+    : m_mostrarHitbox(true), m_mostrarEtiquetas(true), m_mostrarLineasOrdenes(true), m_mostrarFPS(false), m_mostrarPrediccion(true)
 {
     
 }
@@ -33,7 +35,12 @@ void StarterBot::onFrame()
     m_mineralTracker.onFrame();
     m_winPredictor.onFrame();
     if (m_mostrarEtiquetas) { m_mineralTracker.draw(); }
-    m_winPredictor.draw();
+    if (m_mostrarPrediccion) { m_winPredictor.draw(); }
+
+    if (m_mostrarFPS)
+    {
+        BWAPI::Broodwar->drawTextScreen(635, 50, "%c%c%d FPS", BWAPI::Text::Align_Right, BWAPI::Text::White, BWAPI::Broodwar->getFPS());
+    }
 
     // Send our idle workers to mine minerals so they don't just stand there
     sendIdleWorkersToMinerals();
@@ -157,6 +164,11 @@ void StarterBot::onUnitMorph(BWAPI::Unit unit)
 // Called whenever a text is sent to the game by a user
 void StarterBot::onSendText(std::string text) 
 { 
+    std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    const auto first = text.find_first_not_of(" \t\r\n");
+    const auto last = text.find_last_not_of(" \t\r\n");
+    text = first == std::string::npos ? std::string() : text.substr(first, last - first + 1);
+
     if (text == "/map")
     {
         m_mapTools.toggleDraw();
@@ -178,6 +190,26 @@ void StarterBot::onSendText(std::string text)
     {
         m_mostrarLineasOrdenes = !m_mostrarLineasOrdenes;
         BWAPI::Broodwar->printf("%cLineas de ordenes: %s", m_mostrarLineasOrdenes ? BWAPI::Text::Green : BWAPI::Text::Red, m_mostrarLineasOrdenes ? "ON" : "OFF");
+    }
+    else if (text == "frame" || text == "/frame")
+    {
+        m_mostrarFPS = !m_mostrarFPS;
+        BWAPI::Broodwar->printf("%cContador de FPS: %s", m_mostrarFPS ? BWAPI::Text::Green : BWAPI::Text::Red, m_mostrarFPS ? "ON" : "OFF");
+    }
+    else if (text == "prediccion")
+    {
+        m_mostrarPrediccion = !m_mostrarPrediccion;
+        BWAPI::Broodwar->printf("%cBarra de predicciones: %s", m_mostrarPrediccion ? BWAPI::Text::Green : BWAPI::Text::Red, m_mostrarPrediccion ? "ON" : "OFF");
+    }
+    else if (text == "velocidad")
+    {
+        BWAPI::Broodwar->setLocalSpeed(42);
+        BWAPI::Broodwar->printf("%cVelocidad local: 42", BWAPI::Text::Green);
+    }
+    else if (text == "velocidad_" || text == "/velocidad_" || text == "velocidad-" || text == "velocidad 0")
+    {
+        BWAPI::Broodwar->setLocalSpeed(0);
+        BWAPI::Broodwar->printf("%cVelocidad local: 0 (sin demora)", BWAPI::Text::Green);
     }
 }
 

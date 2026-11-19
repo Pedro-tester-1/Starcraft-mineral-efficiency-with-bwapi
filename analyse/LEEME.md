@@ -1,9 +1,9 @@
-# Guía de `analyse_v2`
+# Guía de `analyse`
 
-El análisis vigente es `analyse_v2/analisis_final.py`. Lee las tres carpetas de datos, empareja partidas por raza, número y lado de inicio, y escribe los resúmenes y gráficos en `resultados/`. Se ejecuta desde la raíz del repositorio con:
+El análisis vigente es `analyse/analisis_final.py`. Lee las tres carpetas de datos, empareja partidas por raza, número y lado de inicio, y escribe los resúmenes y gráficos en `resultados/`. Se ejecuta desde la raíz del repositorio con:
 
 ```bash
-python3 analyse_v2/analisis_final.py
+python3 analyse/analisis_final.py
 ```
 
 ## Datos de entrada
@@ -29,4 +29,4 @@ Los nombres `prediccions/` y algunos nombres de archivo con `Iquierda` tienen es
 
 ## Diseño anterior
 
-`bin_linux/analisis_top4.py` pertenece al diseño anterior: mezcla datos minerales con la base del rival, por lo que no es el flujo de análisis vigente. Usa `analyse_v2/analisis_final.py` para reproducir los resultados actuales. Se conserva el archivo anterior como referencia; no forma parte de este análisis.
+`bin_linux/analisis_top4.py` pertenece al diseño anterior: mezcla datos minerales con la base del rival, por lo que no es el flujo de análisis vigente. Usa `analyse/analisis_final.py` para reproducir los resultados actuales. Se conserva el archivo anterior como referencia; no forma parte de este análisis.

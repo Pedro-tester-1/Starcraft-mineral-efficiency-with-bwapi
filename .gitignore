@@ -74,5 +74,5 @@ Release/
 .DS_Store
 Thumbs.db
 Proyecto Final 2026-2.pdf
-# Los CSV de analyse_v2 son datos del análisis, no salidas generadas.
-!/analyse_v2/**/*.csv
+# Los CSV de analyse son datos del análisis, no salidas generadas.
+!/analyse/**/*.csv

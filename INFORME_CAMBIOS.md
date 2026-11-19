@@ -32,8 +32,12 @@ Los puntajes ponderados se vuelven a normalizar para que las probabilidades sume
 
 ## Análisis de las partidas
 
-`analyse_v2/analisis_final.py` combina los datos del frame 5000, minerales y predicciones. Con los archivos presentes analiza 18 partidas (tres por raza y lado de inicio) y genera tablas top 4 para las seis combinaciones de raza y lado, junto con resúmenes, alertas y gráficos en `analyse_v2/resultados/`. La interpretación y el detalle de los archivos están en `analyse_v2/LEEME.md`.
+`analyse/analisis_final.py` combina los datos del frame 5000, minerales y predicciones. Con los archivos presentes analiza 18 partidas (tres por raza y lado de inicio) y genera tablas top 4 para las seis combinaciones de raza y lado, junto con resúmenes, alertas y gráficos en `analyse/resultados/`. La interpretación y el detalle de los archivos están en `analyse/LEEME.md`.
 
 ## Requisitos del proyecto
 
-La implementación del contador y la medición adicional se cotejan con el enunciado en `CUMPLIMIENTO_ENUNCIADO.md`. El bot también conserva las acciones de recolección, producción de trabajadores y suministro del STARTcraft base; no implementa lógica de combate.
+El bot también conserva las acciones de recolección, producción de trabajadores y suministro del STARTcraft base; no implementa lógica de combate.
+
+## Controles de visualización y velocidad
+
+`StarterBot::onSendText` convierte los mensajes a minúsculas y recorta espacios al inicio y al final. `hitbox`, `etiquetas`, `ordenes`, `/map`, `frame` (también `/frame`) y `prediccion` alternan sus visualizaciones. `velocidad` establece velocidad local 42; `velocidad_`, `/velocidad_`, `velocidad-` y `velocidad 0` establecen 0. El contador FPS se dibuja solo mientras está activado.

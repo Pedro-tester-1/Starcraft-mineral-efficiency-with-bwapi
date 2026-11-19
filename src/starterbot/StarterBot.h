@@ -16,6 +16,8 @@ class StarterBot
     bool m_mostrarHitbox;
     bool m_mostrarEtiquetas;
     bool m_mostrarLineasOrdenes;
+    bool m_mostrarFPS;
+    bool m_mostrarPrediccion;
 
 public:
 
